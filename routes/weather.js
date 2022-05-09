@@ -1,20 +1,23 @@
-import Got from 'got'
+import  Got  from 'got'
 const apiKey = '6caafe474bb8d2535f39786ffbbd975b'
-const lat=-33.13067
-const long=-64.34992
-const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&long=${long}&units=metric&appid=${apiKey}`
 
-async function routes (fastify, options) {
-    fastify.get('/getWeather', async (request, reply) => {
-        const response = await Got(url)
-        const parsed_body = JSON.parse(response.body)
+export default async function routes (fastify, options) {
+    fastify.get('/getWeather/:city', async (request, reply) => {
+        const urlcity = `http://api.openweathermap.org/geo/1.0/direct?q=${request.params.city}&limit=1&appid=${apiKey}`
+        const city = await Got(urlcity)
+        if(city.body.length === 0){
+            reply.code(404).send({ msg: "We couldn't find the city you entered" })
+            return
+        }
+        const parsed_city = JSON.parse(city.body)
+        const lat = parsed_city[0].lat  
+        const long = parsed_city[0].lon
+
+        const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${long}&units=metric&exclude=hourly,daily,minutely,alerts&appid=${apiKey}`
+        const weather = await Got(url)
+        const parsed_body = JSON.parse(weather.body)
         const city_weather = parsed_body.current.temp
-    
-       /* if( city_weather > 15){
-    
-        }*/
-        reply.send({ response: response })
+
+        reply.code(200).send({ isHigherThan15: city_weather > 15 })
     })
   }
-  
-  module.exports = routes
