@@ -1,4 +1,4 @@
-# Challenge
+# Fastify
 
 For running the app: 
 - node index.js
